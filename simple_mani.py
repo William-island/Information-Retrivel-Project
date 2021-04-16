@@ -1,75 +1,48 @@
+#这是一个读取csv的简化版本
+
 import pymysql
 from functools import reduce
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap
 from functools import partial
 import sys
-import math
-import time
+import csv
 
-#连接数据库
-conn=pymysql.connect(host = "localhost",user = "root",passwd = "lb15951144240",db = "for_practice")
-#创建游标
-cur=conn.cursor()
+
 
 #建立倒排索引
 #table每一行都是一个posting
 
-
 #wfidf的倒排索引
-cur.execute("select * from wfidf")
+f=open('wfidf.csv',encoding="UTF-8")
+reader = csv.reader(f)
+row=next(reader)
 wf_table=[]
-hanlist=[]
-for row in cur.fetchall():
+for row in reader:
     r=[row[1],[]]
-    hanlist.append(row[1])
     for j in range(2,len(row)):
-        if row[j]>0:
-            r[1].append([j-1,row[j]])
+        if float(row[j])>0:
+            r[1].append([j-1,float(row[j])])
     wf_table.append(r)
+f.close()
 
-
-#求第二范式函数
-def norm(doc):
-    sum=0
-    for value in doc:
-        sum=sum+value*value
-    return sum**0.5
-#计算一行的idf
-def df_cal(row):
-    s=0
-    for i in range(2,272):
-        if row[i]!=0:
-            s=s+1
-    return s
-#读入countmatrix，形成doc向量
-#采用平方和的方法归一化
-cur.execute("select * from countmatrix")
-docs=[]
-df=[]
-for i in range(270):
-    docs.append([])
-for row in cur.fetchall():
-    df.append(df_cal(row))
-    for i in range(2,272):
-        docs[i-2].append(row[i])
-idf=[]
-for i in range(len(df)):
-    idf.append(math.log10(270/df[i]))
-for doc in docs:
-    under=norm(doc)
-    for i in range(len(doc)):
-        doc[i]=doc[i]*idf[i]/under
+#tfidf的倒排索引
+f=open('tfidf.csv',encoding="UTF-8")
+reader = csv.reader(f)
+row=next(reader)
+tf_table=[]
+for row in reader:
+    r=[row[1],[]]
+    for j in range(2,len(row)):
+        if float(row[j])>0:
+            r[1].append([j-1,float(row[j])])
+    tf_table.append(r)
+f.close()
 
 
 
 
 
-
-
-'''
-布尔模型相关
-'''
 #两个posting的AND操作
 def AND(p1,p2):
     i=0
@@ -135,6 +108,8 @@ def OR_MU(plist):
     templist=sorted(plist,key=len,reverse=True)
     return reduce(OR,templist)
 
+
+
 '''
 对term串的处理,即处理一行汉字的AND
 返回一个posting
@@ -169,6 +144,8 @@ def oriSentence(sentence,table):
                 tl=""
     posting=OR_MU(plist)
     return sorted(posting,key=nodeRanking,reverse=True)
+
+
 
 '''
 对布尔表达式子的支持，符号包括AND,OR,ANDNOT或&，|，-及括号(,)
@@ -261,92 +238,9 @@ def boolSentence(sentence,table):
             stack.append(c)
     return sorted(stack[0],key=nodeRanking,reverse=True)
 
-
-
-
-
 '''
 向量模型相关
 '''
-#将查询请求改为加权向量形式
-def to_vector(sentence,hanlist,idf):
-    vector_q=[]
-    for han in hanlist:
-        vector_q.append(sentence.count(han))
-    under=norm(vector_q)
-    if under==0:
-        return vector_q
-    for i in range(len(vector_q)):
-        vector_q[i]=vector_q[i]*idf[i]/under
-    return vector_q
-#计算两个向量间的距离
-def vec_distance(v1,v2):
-    sums=0
-    for i in range(len(v1)):
-        sums=sums+v1[i]*v2[i]
-    return sums
-#计算所有文档和查询的距离，返回文档编号-距离矩阵（已排序）
-def distances(docs,vq):
-    d=[]
-    for i in range(len(docs)):
-        d.append([i+1,vec_distance(docs[i],vq)])
-    return sorted(d,key=nodeRanking,reverse=True)
-#考虑非零元素的简化算法
-def simplified_distances(docs,vq):
-    d=[]
-    for i in range(1,271):
-        d.append([i,0])
-    for i in range(len(vq)):
-        if vq[i]!=0:
-            for j in range(270):
-                if docs[j][i]!=0:
-                    d[j][1]=d[j][1]+docs[j][i]*vq[i]
-    return sorted(d,key=nodeRanking,reverse=True)
-
-
-'''
-概率模型相关
-'''
-#计算ri
-r=[]
-for i in range(len(df)):
-    if df[i]!=270:
-        r.append(df[i]/270)
-    else:
-        r.append(0.00000000000000000000000000001)
-#给出pi
-p=[]
-for i in range(len(df)):
-    p.append(0.5)
-#计算ci的函数
-def c_cal(r,p):
-    c=[]
-    for i in range(len(r)):
-        print(p[i],r[i])
-        c.append(math.log10(p[i]*(1-r[i])/((1-p[i])*r[i])))
-    return c
-c=c_cal(r,p)
-#把查询语句变为01向量
-def to_01vector(sentence,hanlist):
-    vector_q=[]
-    for han in hanlist:
-        if sentence.count(han)!=0:
-            vector_q.append(1)
-        else:
-            vector_q.append(0)
-    return vector_q
-#根据查询计算每篇doc的RSV并排序
-def RSV_ranking(docs,qv,c):
-    RSVs=[]
-    for i in range(1,271):
-        RSVs.append([i,0])
-    for i in range(len(qv)):
-        if qv[i]!=0:
-            for j in range(270):
-                if docs[j][i]!=0:
-                    RSVs[j][1]=RSVs[j][1]+c[i]
-    return sorted(RSVs,key=nodeRanking,reverse=True)
-
 
 
 
@@ -408,10 +302,9 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "搜索结果"))
         self.menu.setTitle(_translate("MainWindow", "搜索界面"))
 #显示函数
-def convert1(ui,table):
+def convert(ui,table):
         ui.listWidget.clear()
         input = ui.lineEdit.text()
-        start=time.time()
         flag=False
         for value in input:
             if value=="&" or value=="|" or value=="-" or value=="(" or value==")" or "A" in value or "O" in value:
@@ -420,11 +313,9 @@ def convert1(ui,table):
             posting=boolSentence(input,table)
         else:
             posting=oriSentence(input,table)
-        stop=time.time()
         if len(posting)==0:
             ui.listWidget.addItem("未检索到相应结果")
             return
-        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
         for node in posting:
             no=node[0]
             f=open('songci\Doc'+str(no)+'.txt','r')
@@ -441,95 +332,12 @@ def convert1(ui,table):
                 else:
                     result=result+c
             ui.listWidget.addItem(result)
-def convert2(ui,hanlist,docs,idf):
-    ui.listWidget.clear()
-    input = ui.lineEdit.text()
-    start=time.time()
-    vq=to_vector(input,hanlist,idf)
-    #dposting=distances(docs,vq)
-    dposting=simplified_distances(docs, vq)
-    doc_sum=0
-    for i in range(len(dposting)):
-        if(dposting[i][1]!=0):
-            doc_sum=doc_sum+1
-        else:
-            break
-    doc_sum=min(20,doc_sum)
-    stop=time.time()
-    if doc_sum==0:
-        ui.listWidget.addItem("未检索到相应结果")
-        return
-    else:
-        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
-        for i in range(doc_sum):
-            no=dposting[i][0]
-            f=open('songci\Doc'+str(no)+'.txt','r')
-            txt=f.read()
-            result="Doc"+str(no)+"\n"+"score:"+str(dposting[i][1])+"\n"
-            timer=0
-            for c in txt:
-                timer=timer+1
-                if timer==37:
-                    result=result+"\n"
-                    timer=0
-                if c in input and c!=" ":
-                    result=result+"["+c+"]"
-                else:
-                    result=result+c
-            ui.listWidget.addItem(result)
-def convert3(ui,hanlist,docs,c):
-    ui.listWidget.clear()
-    input = ui.lineEdit.text()
-    start=time.time()
-    qv=to_01vector(input,hanlist)
-    dposting=RSV_ranking(docs, qv, c)
-    doc_sum=0
-    for i in range(len(dposting)):
-        if(dposting[i][1]!=0):
-            doc_sum=doc_sum+1
-        else:
-            break
-    doc_sum=min(20,doc_sum)
-    stop=time.time()
-    if doc_sum==0:
-        ui.listWidget.addItem("未检索到相应结果")
-        return
-    else:
-        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
-        for i in range(doc_sum):
-            no=dposting[i][0]
-            f=open('songci\Doc'+str(no)+'.txt','r')
-            txt=f.read()
-            result="Doc"+str(no)+"\n"+"score:"+str(dposting[i][1])+"\n"
-            timer=0
-            for c in txt:
-                timer=timer+1
-                if timer==37:
-                    result=result+"\n"
-                    timer=0
-                if c in input and c!=" ":
-                    result=result+"["+c+"]"
-                else:
-                    result=result+c
-            ui.listWidget.addItem(result)
-
-
 
 #界面启动
 app = QtWidgets.QApplication(sys.argv)  
 MainWindow = QtWidgets.QMainWindow()   
 ui = Ui_MainWindow()                         
 ui.setupUi(MainWindow)                 
-MainWindow.show()
-#ui.pushButton.clicked.connect(partial(convert1,ui,wf_table))                    
-#ui.pushButton.clicked.connect(partial(convert2,ui,hanlist,docs,idf))  
-ui.pushButton.clicked.connect(partial(convert3,ui,hanlist,docs,c))  
+MainWindow.show()                  
+ui.pushButton.clicked.connect(partial(convert,ui,tf_table))  
 sys.exit(app.exec_())            
-
-
-
-
-
-
-
-    
