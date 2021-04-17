@@ -477,7 +477,7 @@ def convert2(ui,hanlist,docs,idf):
                 else:
                     result=result+c
             ui.listWidget.addItem(result)
-def convert3(ui,hanlist,docs,c):
+def convert3(ui,hanlist,docs):
     ui.listWidget.clear()
     input = ui.lineEdit.text()
     start=time.time()
@@ -502,16 +502,37 @@ def convert3(ui,hanlist,docs,c):
             txt=f.read()
             result="Doc"+str(no)+"\n"+"score:"+str(dposting[i][1])+"\n"
             timer=0
-            for c in txt:
+            for cc in txt:
                 timer=timer+1
                 if timer==37:
                     result=result+"\n"
                     timer=0
-                if c in input and c!=" ":
-                    result=result+"["+c+"]"
+                if cc in input and cc!=" ":
+                    result=result+"["+cc+"]"
                 else:
-                    result=result+c
+                    result=result+cc
             ui.listWidget.addItem(result)
+    #迭代优化
+    Rlist=[]
+    RN=10
+    for i in range(RN):
+        Rlist.append(dposting[i][0])
+    for i in range(len(qv)):
+        if qv[i]!=0:
+            s=0
+            for j in range(len(Rlist)):
+                if docs[Rlist[j]-1][i]!=0:
+                    s=s+1
+            pi=s/RN
+            if pi==0:
+                pi=pi+0.000000001
+            if pi==1:
+                pi=pi-0.000000001
+            ri=(df[i]-s-0.00000001)/(270-RN)
+            r[i]=ri
+            p[i]=pi
+            c[i]=math.log10(p[i]*(1-r[i])/((1-p[i])*r[i]))
+    
 
 
 
@@ -523,7 +544,7 @@ ui.setupUi(MainWindow)
 MainWindow.show()
 #ui.pushButton.clicked.connect(partial(convert1,ui,wf_table))                    
 #ui.pushButton.clicked.connect(partial(convert2,ui,hanlist,docs,idf))  
-ui.pushButton.clicked.connect(partial(convert3,ui,hanlist,docs,c))  
+ui.pushButton.clicked.connect(partial(convert3,ui,hanlist,docs))  
 sys.exit(app.exec_())            
 
 
