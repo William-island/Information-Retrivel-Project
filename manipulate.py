@@ -6,6 +6,8 @@ from functools import partial
 import sys
 import math
 import time
+import copy
+
 
 #连接数据库
 conn=pymysql.connect(host = "localhost",user = "root",passwd = "lb15951144240",db = "for_practice")
@@ -61,16 +63,18 @@ for i in range(len(df)):
 dfN=[]  #计算term项的在所有文档中的概率
 for i in range(len(df)):
     dfN.append(df[i]/sum_N)
-max_docs=docs #采用最大值归一化方法
-norm_docs=docs #采用平方归一化方法
-for doc in norm_docs:
-    under=norm(doc)
-    for i in range(len(doc)):
-        doc[i]=doc[i]*idf[i]/under
-for doc in max_docs:
-    under=max(doc)
-    for i in range(len(doc)):
-        doc[i]=doc[i]*idf[i]/under
+max_docs=copy.deepcopy(docs) #采用最大值归一化方法
+norm_docs=copy.deepcopy(docs) #采用平方归一化方法
+for k in range(len(norm_docs)):
+    under=norm(norm_docs[k])
+    for i in range(len(norm_docs[k])):
+        norm_docs[k][i]=norm_docs[k][i]*idf[i]/under
+norm_docs[0][0]=8
+for k in range(len(max_docs)):
+    under=max(max_docs[k])
+    for i in range(len(max_docs[k])):
+        max_docs[k][i]=max_docs[k][i]*idf[i]/under
+
 
 
 
@@ -366,10 +370,16 @@ def MLE_ranking(docs,qv,lamb,dfN):
     dposting=[]
     for i in range(1,271):
         dposting.append([i,1])
+    ff=False
     for i in range(len(qv)):
         if qv[i]!=0:
+            if ff==False:
+                ff=True
             for j in range(270):
                 dposting[j][1]=dposting[j][1]*(lamb*docs[j][i]+(1-lamb)*dfN[i])
+    if ff==False:
+        for i in range(270):
+            dposting[i][1]=0
     return sorted(dposting,key=nodeRanking,reverse=True)
 
 
@@ -383,52 +393,128 @@ class Ui_MainWindow(object):
         MainWindow.resize(800, 700)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit.setGeometry(QtCore.QRect(100, 70, 450, 41))
+        self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
+        self.tabWidget.setGeometry(QtCore.QRect(0, 0, 1000, 1000))
+        self.tabWidget.setMaximumSize(QtCore.QSize(800, 16777215))
+        self.tabWidget.setObjectName("tabWidget")
+        self.tab = QtWidgets.QWidget()
+        self.tab.setObjectName("tab")
+        self.lineEdit = QtWidgets.QLineEdit(self.tab)
+        self.lineEdit.setGeometry(QtCore.QRect(100,70, 450, 41))
         self.lineEdit.setObjectName("lineEdit")
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(20, 80, 71, 21))
-        self.label.setObjectName("label")
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton = QtWidgets.QPushButton(self.tab)
         self.pushButton.setGeometry(QtCore.QRect(450,70, 100, 41))
         self.pushButton.setObjectName("pushButton")
-        self.listWidget = QtWidgets.QListWidget(self.centralwidget)
-        self.listWidget.setGeometry(QtCore.QRect(100, 120, 600, 500))
-        self.listWidget.setObjectName("listWidget")
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(20, 130, 71, 21))
+        self.label = QtWidgets.QLabel(self.tab)
+        self.label.setGeometry(QtCore.QRect(15, 60, 70, 40))
+        self.label.setObjectName("label")
+        self.label_2 = QtWidgets.QLabel(self.tab)
+        self.label_2.setGeometry(QtCore.QRect(15, 125, 70, 40))
         self.label_2.setObjectName("label_2")
+        self.listWidget = QtWidgets.QListWidget(self.tab)
+        self.listWidget.setGeometry(QtCore.QRect(100, 120, 615, 500))
+        self.listWidget.setObjectName("listWidget")
+        self.tabWidget.addTab(self.tab, "")
+        self.tab_2 = QtWidgets.QWidget()
+        self.tab_2.setObjectName("tab_2")
+        self.label_3 = QtWidgets.QLabel(self.tab_2)
+        self.label_3.setGeometry(QtCore.QRect(15, 60, 70, 40))
+        self.label_3.setObjectName("label_3")
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.tab_2)
+        self.lineEdit_2.setGeometry(QtCore.QRect(100,70, 450, 41))
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.pushButton_2 = QtWidgets.QPushButton(self.tab_2)
+        self.pushButton_2.setGeometry(QtCore.QRect(450,70, 100, 41))
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.label_4 = QtWidgets.QLabel(self.tab_2)
+        self.label_4.setGeometry(QtCore.QRect(15, 125, 70, 40))
+        self.label_4.setObjectName("label_4")
+        self.listWidget_2 = QtWidgets.QListWidget(self.tab_2)
+        self.listWidget_2.setGeometry(QtCore.QRect(100, 120, 615, 500))
+        self.listWidget_2.setObjectName("listWidget_2")
+        self.tabWidget.addTab(self.tab_2, "")
+        self.tab_3 = QtWidgets.QWidget()
+        self.tab_3.setObjectName("tab_3")
+        self.label_5 = QtWidgets.QLabel(self.tab_3)
+        self.label_5.setGeometry(QtCore.QRect(15, 60, 70, 40))
+        self.label_5.setObjectName("label_5")
+        self.lineEdit_3 = QtWidgets.QLineEdit(self.tab_3)
+        self.lineEdit_3.setGeometry(QtCore.QRect(100,70, 450, 41))
+        self.lineEdit_3.setObjectName("lineEdit_3")
+        self.pushButton_3 = QtWidgets.QPushButton(self.tab_3)
+        self.pushButton_3.setGeometry(QtCore.QRect(450,70, 100, 41))
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.label_6 = QtWidgets.QLabel(self.tab_3)
+        self.label_6.setGeometry(QtCore.QRect(15, 125, 70, 40))
+        self.label_6.setObjectName("label_6")
+        self.listWidget_3 = QtWidgets.QListWidget(self.tab_3)
+        self.listWidget_3.setGeometry(QtCore.QRect(100, 120, 615, 500))
+        self.listWidget_3.setObjectName("listWidget_3")
+        self.tabWidget.addTab(self.tab_3, "")
+        self.tab_4 = QtWidgets.QWidget()
+        self.tab_4.setObjectName("tab_4")
+        self.label_7 = QtWidgets.QLabel(self.tab_4)
+        self.label_7.setGeometry(QtCore.QRect(15, 60, 70, 40))
+        self.label_7.setObjectName("label_7")
+        self.lineEdit_4 = QtWidgets.QLineEdit(self.tab_4)
+        self.lineEdit_4.setGeometry(QtCore.QRect(100,70, 450, 41))
+        self.lineEdit_4.setObjectName("lineEdit_4")
+        self.pushButton_4 = QtWidgets.QPushButton(self.tab_4)
+        self.pushButton_4.setGeometry(QtCore.QRect(450,70, 100, 41))
+        self.pushButton_4.setObjectName("pushButton_4")
+        self.label_8 = QtWidgets.QLabel(self.tab_4)
+        self.label_8.setGeometry(QtCore.QRect(15, 125, 70, 40))
+        self.label_8.setObjectName("label_8")
+        self.listWidget_4 = QtWidgets.QListWidget(self.tab_4)
+        self.listWidget_4.setGeometry(QtCore.QRect(100, 120, 615, 500))
+        self.listWidget_4.setObjectName("listWidget_4")
+        self.tabWidget.addTab(self.tab_4, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 552, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 409, 22))
         self.menubar.setObjectName("menubar")
-        self.menu = QtWidgets.QMenu(self.menubar)
-        self.menu.setObjectName("menu")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        self.menubar.addAction(self.menu.menuAction())
 
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(550,-70, 300, 400))
-        self.label_3.setObjectName("label_3")
+        self.label_9 = QtWidgets.QLabel(self.centralwidget)
+        self.label_9.setGeometry(QtCore.QRect(550,-70, 300, 400))
+        self.label_9.setObjectName("label_9")
         pix = QPixmap('logo.png')
-        self.label_3.setPixmap(pix)
-
-    
+        self.label_9.setPixmap(pix)
+        #响应回车事件
+        self.lineEdit.returnPressed.connect(partial(convert1,ui,wf_table))
+        self.lineEdit_2.returnPressed.connect(partial(convert2,ui,hanlist,idf))
+        self.lineEdit_3.returnPressed.connect(partial(convert3,ui,hanlist,norm_docs))
+        self.lineEdit_4.returnPressed.connect(partial(convert4,ui,hanlist,norm_docs))
 
         self.retranslateUi(MainWindow)
+        self.tabWidget.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "搜索内容"))
         self.pushButton.setText(_translate("MainWindow", "搜索"))
+        self.label.setText(_translate("MainWindow", "搜索内容"))
         self.label_2.setText(_translate("MainWindow", "搜索结果"))
-        self.menu.setTitle(_translate("MainWindow", "搜索界面"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "布尔模型"))
+        self.label_3.setText(_translate("MainWindow", "搜索内容"))
+        self.pushButton_2.setText(_translate("MainWindow", "搜索"))
+        self.label_4.setText(_translate("MainWindow", "搜索结果"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "向量模型"))
+        self.label_5.setText(_translate("MainWindow", "搜索内容"))
+        self.pushButton_3.setText(_translate("MainWindow", "搜索"))
+        self.label_6.setText(_translate("MainWindow", "搜索结果"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "概率模型"))
+        self.label_7.setText(_translate("MainWindow", "搜索内容"))
+        self.pushButton_4.setText(_translate("MainWindow", "搜索"))
+        self.label_8.setText(_translate("MainWindow", "搜索结果"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("MainWindow", "语言模型"))
+
 #显示函数
+flag=[False]
 def convert1(ui,table):
         ui.listWidget.clear()
         input = ui.lineEdit.text()
@@ -462,13 +548,20 @@ def convert1(ui,table):
                 else:
                     result=result+c
             ui.listWidget.addItem(result)
-def convert2(ui,hanlist,docs,idf):
-    ui.listWidget.clear()
-    input = ui.lineEdit.text()
+def convert2(ui,hanlist,idf):
+    ui.listWidget_2.clear()
+    input = ui.lineEdit_2.text()
     start=time.time()
     vq=to_vector(input,hanlist,idf)
-    #dposting=distances(docs,vq)
-    dposting=simplified_distances(docs, vq)
+    #dposting=distances(d,vq)
+    if flag[0]==False:
+        ui.listWidget_2.addItem("采用平方归一化方法")
+        dposting=simplified_distances(norm_docs, vq)
+        flag[0]=True
+    else:
+        ui.listWidget_2.addItem("采用最大值归一化方法")
+        dposting=simplified_distances(max_docs, vq)
+        flag[0]=False
     doc_sum=0
     for i in range(len(dposting)):
         if(dposting[i][1]!=0):
@@ -478,10 +571,10 @@ def convert2(ui,hanlist,docs,idf):
     doc_sum=min(20,doc_sum)
     stop=time.time()
     if doc_sum==0:
-        ui.listWidget.addItem("未检索到相应结果")
+        ui.listWidget_2.addItem("未检索到相应结果")
         return
     else:
-        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
+        ui.listWidget_2.addItem("共花费"+str(stop-start)+"秒,结果如下:")
         for i in range(doc_sum):
             no=dposting[i][0]
             f=open('songci\Doc'+str(no)+'.txt','r')
@@ -497,10 +590,10 @@ def convert2(ui,hanlist,docs,idf):
                     result=result+"["+c+"]"
                 else:
                     result=result+c
-            ui.listWidget.addItem(result)
+            ui.listWidget_2.addItem(result)
 def convert3(ui,hanlist,docs):
-    ui.listWidget.clear()
-    input = ui.lineEdit.text()
+    ui.listWidget_3.clear()
+    input = ui.lineEdit_3.text()
     start=time.time()
     qv=to_01vector(input,hanlist)
     dposting=RSV_ranking(docs, qv, c)
@@ -513,10 +606,10 @@ def convert3(ui,hanlist,docs):
     doc_sum=min(20,doc_sum)
     stop=time.time()
     if doc_sum==0:
-        ui.listWidget.addItem("未检索到相应结果")
+        ui.listWidget_3.addItem("未检索到相应结果")
         return
     else:
-        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
+        ui.listWidget_3.addItem("共花费"+str(stop-start)+"秒,结果如下:")
         for i in range(doc_sum):
             no=dposting[i][0]
             f=open('songci\Doc'+str(no)+'.txt','r')
@@ -532,7 +625,7 @@ def convert3(ui,hanlist,docs):
                     result=result+"["+cc+"]"
                 else:
                     result=result+cc
-            ui.listWidget.addItem(result)
+            ui.listWidget_3.addItem(result)
     #迭代优化
     Rlist=[]
     RN=10
@@ -549,13 +642,13 @@ def convert3(ui,hanlist,docs):
                 pi=pi+0.000000001
             if pi==1:
                 pi=pi-0.000000001
-            ri=(df[i]-s-0.00000001)/(270-RN)
+            ri=(df[i]-s+0.0000000001)/(270-RN)
             r[i]=ri
             p[i]=pi
             c[i]=math.log10(p[i]*(1-r[i])/((1-p[i])*r[i]))
 def convert4(ui,hanlist,docs):
-    ui.listWidget.clear()
-    input = ui.lineEdit.text()
+    ui.listWidget_4.clear()
+    input = ui.lineEdit_4.text()
     start=time.time()
     vq=to_01vector(input,hanlist)
     lamb=1/2
@@ -569,10 +662,10 @@ def convert4(ui,hanlist,docs):
     doc_sum=min(20,doc_sum)
     stop=time.time()
     if doc_sum==0:
-        ui.listWidget.addItem("未检索到相应结果")
+        ui.listWidget_4.addItem("未检索到相应结果")
         return
     else:
-        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
+        ui.listWidget_4.addItem("共花费"+str(stop-start)+"秒,结果如下:")
         for i in range(doc_sum):
             no=dposting[i][0]
             f=open('songci\Doc'+str(no)+'.txt','r')
@@ -588,8 +681,10 @@ def convert4(ui,hanlist,docs):
                     result=result+"["+c+"]"
                 else:
                     result=result+c
-            ui.listWidget.addItem(result)
+            ui.listWidget_4.addItem(result)
     
+
+
 
 
 
@@ -598,11 +693,11 @@ app = QtWidgets.QApplication(sys.argv)
 MainWindow = QtWidgets.QMainWindow()   
 ui = Ui_MainWindow()                         
 ui.setupUi(MainWindow)                 
-MainWindow.show()
-#ui.pushButton.clicked.connect(partial(convert1,ui,wf_table))                    
-#ui.pushButton.clicked.connect(partial(convert2,ui,hanlist,docs,idf))  
-#ui.pushButton.clicked.connect(partial(convert3,ui,hanlist,norm_docs))  
-ui.pushButton.clicked.connect(partial(convert4,ui,hanlist,norm_docs))  
+MainWindow.show()                    
+ui.pushButton.clicked.connect(partial(convert1,ui,wf_table))
+ui.pushButton_2.clicked.connect(partial(convert2,ui,hanlist,idf))  
+ui.pushButton_3.clicked.connect(partial(convert3,ui,hanlist,norm_docs))  
+ui.pushButton_4.clicked.connect(partial(convert4,ui,hanlist,norm_docs))
 sys.exit(app.exec_())            
 
 
