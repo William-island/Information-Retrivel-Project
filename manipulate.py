@@ -386,6 +386,7 @@ def MLE_ranking(docs,qv,lamb,dfN):
 '''
 ui界面相关
 '''
+
 #ui的类
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
