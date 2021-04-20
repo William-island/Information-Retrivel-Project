@@ -1,7 +1,4 @@
 import time
 
-s="1112"
-def pp():
-    print(s)
-
-pp()
+l=[1,2,3]
+print(max(l))

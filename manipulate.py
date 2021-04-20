@@ -47,20 +47,30 @@ def df_cal(row):
 cur.execute("select * from countmatrix")
 docs=[]
 df=[]
+sum_N=0 #统计所有文档的总字数
 for i in range(270):
     docs.append([])
 for row in cur.fetchall():
     df.append(df_cal(row))
     for i in range(2,272):
         docs[i-2].append(row[i])
+        sum_N=sum_N+row[i]
 idf=[]
 for i in range(len(df)):
     idf.append(math.log10(270/df[i]))
-for doc in docs:
+dfN=[]  #计算term项的在所有文档中的概率
+for i in range(len(df)):
+    dfN.append(df[i]/sum_N)
+max_docs=docs #采用最大值归一化方法
+norm_docs=docs #采用平方归一化方法
+for doc in norm_docs:
     under=norm(doc)
     for i in range(len(doc)):
         doc[i]=doc[i]*idf[i]/under
-
+for doc in max_docs:
+    under=max(doc)
+    for i in range(len(doc)):
+        doc[i]=doc[i]*idf[i]/under
 
 
 
@@ -348,8 +358,19 @@ def RSV_ranking(docs,qv,c):
     return sorted(RSVs,key=nodeRanking,reverse=True)
 
 
-
-
+'''
+语言模型相关
+'''
+#语言模型排序函数
+def MLE_ranking(docs,qv,lamb,dfN):
+    dposting=[]
+    for i in range(1,271):
+        dposting.append([i,1])
+    for i in range(len(qv)):
+        if qv[i]!=0:
+            for j in range(270):
+                dposting[j][1]=dposting[j][1]*(lamb*docs[j][i]+(1-lamb)*dfN[i])
+    return sorted(dposting,key=nodeRanking,reverse=True)
 
 
 '''
@@ -532,6 +553,42 @@ def convert3(ui,hanlist,docs):
             r[i]=ri
             p[i]=pi
             c[i]=math.log10(p[i]*(1-r[i])/((1-p[i])*r[i]))
+def convert4(ui,hanlist,docs):
+    ui.listWidget.clear()
+    input = ui.lineEdit.text()
+    start=time.time()
+    vq=to_01vector(input,hanlist)
+    lamb=1/2
+    dposting=MLE_ranking(docs,vq, lamb, dfN)
+    doc_sum=0
+    for i in range(len(dposting)):
+        if(dposting[i][1]!=0):
+            doc_sum=doc_sum+1
+        else:
+            break
+    doc_sum=min(20,doc_sum)
+    stop=time.time()
+    if doc_sum==0:
+        ui.listWidget.addItem("未检索到相应结果")
+        return
+    else:
+        ui.listWidget.addItem("共花费"+str(stop-start)+"秒,结果如下:")
+        for i in range(doc_sum):
+            no=dposting[i][0]
+            f=open('songci\Doc'+str(no)+'.txt','r')
+            txt=f.read()
+            result="Doc"+str(no)+"\n"+"score:"+str(dposting[i][1])+"\n"
+            timer=0
+            for c in txt:
+                timer=timer+1
+                if timer==37:
+                    result=result+"\n"
+                    timer=0
+                if c in input and c!=" ":
+                    result=result+"["+c+"]"
+                else:
+                    result=result+c
+            ui.listWidget.addItem(result)
     
 
 
@@ -544,7 +601,8 @@ ui.setupUi(MainWindow)
 MainWindow.show()
 #ui.pushButton.clicked.connect(partial(convert1,ui,wf_table))                    
 #ui.pushButton.clicked.connect(partial(convert2,ui,hanlist,docs,idf))  
-ui.pushButton.clicked.connect(partial(convert3,ui,hanlist,docs))  
+#ui.pushButton.clicked.connect(partial(convert3,ui,hanlist,norm_docs))  
+ui.pushButton.clicked.connect(partial(convert4,ui,hanlist,norm_docs))  
 sys.exit(app.exec_())            
 
 
