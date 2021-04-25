@@ -10,7 +10,7 @@ import copy
 
 
 #连接数据库
-conn=pymysql.connect(host = "localhost",user = "root",passwd = "lb15951144240",db = "for_practice")
+conn=pymysql.connect(host = "localhost",user = "root",passwd = "xxxxxxxxxxxx",db = "for_practice")
 #创建游标
 cur=conn.cursor()
 
@@ -332,6 +332,10 @@ for i in range(len(df)):
 p=[]
 for i in range(len(df)):
     p.append(0.5)
+#pi的第二种方法
+p2=[]
+for i in range(len(df)):
+    p.append((df[i]+0.5)/271)
 #计算ci的函数
 def c_cal(r,p):
     c=[]
@@ -652,7 +656,7 @@ def convert4(ui,hanlist,docs):
     input = ui.lineEdit_4.text()
     start=time.time()
     vq=to_01vector(input,hanlist)
-    lamb=1/2
+    lamb=0.7
     dposting=MLE_ranking(docs,vq, lamb, dfN)
     doc_sum=0
     for i in range(len(dposting)):

@@ -30,7 +30,7 @@ for key in charSet:
     charList=charList+key
 
 #连接for_practice数据库
-conn=pymysql.connect(host = "localhost",user = "root",passwd = "lb15951144240",db = "for_practice")
+conn=pymysql.connect(host = "localhost",user = "root",passwd = "xxxxxxxxxxx",db = "for_practice")
 #创建游标
 cur=conn.cursor()
 #填写数据库表的内容
